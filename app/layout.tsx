@@ -1,57 +1,24 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://oclix.vercel.app"),
-
-  title: {
-    default: "Oclix — Ferramentas online simples e rápidas",
-    template: "%s | Oclix",
-  },
-
+  title: "Oclix - Ferramentas Online Simples e Rápidas",
   description:
-    "Ferramentas online simples, rápidas e gratuitas para trabalhar com PDFs, imagens e documentos.",
-
-  keywords: [
-    "ferramentas online",
-    "ferramentas gratuitas",
-    "comprimir PDF",
-    "converter imagens",
-    "remover fundo de imagem",
-    "juntar PDF",
-    "separar PDF",
-    "PDF online",
-    "imagem online",
-  ],
-
-  authors: [
-    {
-      name: "Oclix",
-    },
-  ],
-
-  creator: "Oclix",
-
-  openGraph: {
-    type: "website",
-    locale: "pt_BR",
-    url: "https://oclix.vercel.app",
-    siteName: "Oclix",
-    title: "Oclix — Ferramentas online simples e rápidas",
-    description:
-      "Ferramentas online simples, rápidas e gratuitas para trabalhar com PDFs, imagens e documentos.",
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "Oclix — Ferramentas online simples e rápidas",
-    description:
-      "Ferramentas online simples, rápidas e gratuitas para trabalhar com PDFs, imagens e documentos.",
-  },
-
-  robots: {
-    index: true,
-    follow: true,
+    "Ferramentas online gratuitas para trabalhar com PDFs, imagens e documentos de forma simples e rápida.",
+  verification: {
+    google:
+      "5UGrw5PylnI2VPSs6BTXpdo-LJZuC3nuZX3BN7kthw8",
   },
 };
 
@@ -61,8 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html
+      lang="pt-BR"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }
