@@ -1,636 +1,260 @@
-"use client";
+import type { Metadata } from "next";
+import SepararPdf from "./separar-pdf";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { PDFDocument } from "pdf-lib";
+export const metadata: Metadata = {
+  title: "Separar PDF Online Grátis | Extrair Páginas de PDF | Oclix",
+  description:
+    "Separe PDF online grátis e extraia páginas específicas de um arquivo PDF. Escolha as páginas que deseja separar e baixe um novo PDF de forma rápida e segura.",
+  keywords: [
+    "separar PDF",
+    "separar PDF online",
+    "separar PDF grátis",
+    "dividir PDF",
+    "dividir PDF online",
+    "extrair páginas de PDF",
+    "extrair páginas de PDF online",
+    "separar páginas PDF",
+    "extrair páginas PDF",
+    "ferramenta PDF online",
+  ],
+  alternates: {
+    canonical: "https://oclix.vercel.app/ferramentas/separar-pdf",
+  },
+  openGraph: {
+    title: "Separar PDF Online Grátis | Oclix",
+    description:
+      "Separe arquivos PDF online e extraia apenas as páginas que você precisa. Ferramenta rápida, simples e gratuita.",
+    url: "https://oclix.vercel.app/ferramentas/separar-pdf",
+    siteName: "Oclix",
+    type: "website",
+  },
+};
 
 export default function SepararPdfPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [pageCount, setPageCount] = useState<number | null>(null);
-
-  const [selectedPages, setSelectedPages] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  const [message, setMessage] = useState("");
-
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (downloadUrl) {
-        URL.revokeObjectURL(downloadUrl);
-      }
-    };
-  }, [downloadUrl]);
-
-  async function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const selectedFile = event.target.files?.[0];
-
-    if (!selectedFile) {
-      return;
-    }
-
-    if (selectedFile.type !== "application/pdf") {
-      setMessage(
-        "Por favor, selecione um arquivo PDF válido."
-      );
-
-      return;
-    }
-
-    try {
-      setMessage("");
-      setDownloadUrl(null);
-      setProgress(0);
-      setSelectedPages("");
-
-      const arrayBuffer =
-        await selectedFile.arrayBuffer();
-
-      const pdfDoc =
-        await PDFDocument.load(arrayBuffer);
-
-      const totalPages =
-        pdfDoc.getPageCount();
-
-      setFile(selectedFile);
-      setPageCount(totalPages);
-
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        "Não foi possível ler o PDF. Verifique se o arquivo é válido."
-      );
-
-      setFile(null);
-      setPageCount(null);
-    }
-
-    // Permite selecionar o mesmo arquivo novamente
-    event.target.value = "";
-  }
-
-  function clearFile() {
-    if (downloadUrl) {
-      URL.revokeObjectURL(downloadUrl);
-    }
-
-    setFile(null);
-    setPageCount(null);
-    setSelectedPages("");
-
-    setLoading(false);
-    setProgress(0);
-
-    setMessage("");
-    setDownloadUrl(null);
-  }
-
-  function parsePages(
-    input: string,
-    totalPages: number
-  ): number[] {
-    const pages = new Set<number>();
-
-    const parts = input
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean);
-
-    for (const part of parts) {
-
-      // Intervalo de páginas
-      // Exemplo: 1-5
-      if (part.includes("-")) {
-
-        const [startText, endText] =
-          part
-            .split("-")
-            .map((value) => value.trim());
-
-        const start = Number(startText);
-        const end = Number(endText);
-
-        if (
-          !Number.isInteger(start) ||
-          !Number.isInteger(end) ||
-          start < 1 ||
-          end > totalPages ||
-          start > end
-        ) {
-          throw new Error(
-            "Intervalo de páginas inválido."
-          );
-        }
-
-        for (
-          let page = start;
-          page <= end;
-          page++
-        ) {
-          pages.add(page);
-        }
-
-      } else {
-
-        // Página individual
-        // Exemplo: 3
-        const page = Number(part);
-
-        if (
-          !Number.isInteger(page) ||
-          page < 1 ||
-          page > totalPages
-        ) {
-          throw new Error(
-            "Número de página inválido."
-          );
-        }
-
-        pages.add(page);
-      }
-    }
-
-    return Array.from(pages).sort(
-      (a, b) => a - b
-    );
-  }
-
-  async function separatePdf() {
-    if (
-      !file ||
-      pageCount === null
-    ) {
-      setMessage(
-        "Selecione um arquivo PDF primeiro."
-      );
-
-      return;
-    }
-
-    if (!selectedPages.trim()) {
-      setMessage(
-        "Informe quais páginas deseja separar."
-      );
-
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setMessage("");
-      setDownloadUrl(null);
-      setProgress(0);
-
-      // Etapa 1
-      setProgress(10);
-
-      const pagesToExtract =
-        parsePages(
-          selectedPages,
-          pageCount
-        );
-
-      if (
-        pagesToExtract.length === 0
-      ) {
-        setMessage(
-          "Selecione pelo menos uma página."
-        );
-
-        setLoading(false);
-        setProgress(0);
-
-        return;
-      }
-
-      // Etapa 2
-      setProgress(30);
-
-      const arrayBuffer =
-        await file.arrayBuffer();
-
-      const originalPdf =
-        await PDFDocument.load(
-          arrayBuffer
-        );
-
-      // Etapa 3
-      setProgress(50);
-
-      const newPdf =
-        await PDFDocument.create();
-
-      const pageIndexes =
-        pagesToExtract.map(
-          (pageNumber) =>
-            pageNumber - 1
-        );
-
-      // Etapa 4
-      setProgress(70);
-
-      const copiedPages =
-        await newPdf.copyPages(
-          originalPdf,
-          pageIndexes
-        );
-
-      copiedPages.forEach(
-        (page) => {
-          newPdf.addPage(page);
-        }
-      );
-
-      // Etapa 5
-      setProgress(90);
-
-      const separatedPdf =
-        await newPdf.save();
-
-      const blob = new Blob(
-        [
-          new Uint8Array(
-            separatedPdf
-          ),
-        ],
-        {
-          type: "application/pdf",
-        }
-      );
-
-      const url =
-        URL.createObjectURL(blob);
-
-      setDownloadUrl(url);
-
-      // Finalizado
-      setProgress(100);
-
-      setMessage(
-        `${pagesToExtract.length} página(s) separada(s) com sucesso!`
-      );
-
-    } catch (error) {
-      console.error(error);
-
-      if (
-        error instanceof Error
-      ) {
-        setMessage(
-          error.message
-        );
-      } else {
-        setMessage(
-          "Não foi possível separar o PDF."
-        );
-      }
-
-      setProgress(0);
-
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function formatFileSize(
-    size: number
-  ) {
-    if (size < 1024) {
-      return `${size} Bytes`;
-    }
-
-    if (
-      size <
-      1024 * 1024
-    ) {
-      return `${(
-        size / 1024
-      ).toFixed(2)} KB`;
-    }
-
-    return `${(
-      size /
-      (1024 * 1024)
-    ).toFixed(2)} MB`;
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50">
+    <>
+      <SepararPdf />
 
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <section className="border-t bg-white">
+        <div className="mx-auto max-w-4xl px-5 py-16 sm:py-20">
 
-          {/* Logo */}
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight text-gray-900"
-          >
-            Oclix
-          </Link>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+            Separar PDF online grátis
+          </h2>
 
-          {/* Navegação */}
-          <nav className="flex items-center gap-6">
+          <div className="mt-6 space-y-5 text-base leading-7 text-slate-600">
 
-            <Link
-              href="/"
-              className="text-sm font-medium text-gray-600 transition hover:text-gray-900"
-            >
-              Início
-            </Link>
+            <p>
+              Com o Separador de PDF do Oclix, você pode extrair páginas
+              específicas de um arquivo PDF diretamente no navegador. A
+              ferramenta permite selecionar páginas individuais ou intervalos
+              de páginas e gerar um novo documento PDF.
+            </p>
 
-            <Link
-              href="/ferramentas"
-              className="text-sm font-medium text-gray-600 transition hover:text-gray-900"
-            >
-              Ferramentas
-            </Link>
+            <p>
+              Você pode separar páginas de um PDF de forma rápida e simples,
+              sem precisar instalar programas no computador. Basta selecionar
+              o arquivo, informar as páginas que deseja extrair e baixar o
+              novo PDF.
+            </p>
 
-          </nav>
-
-        </div>
-      </header>
-
-      {/* Conteúdo */}
-      <section className="mx-auto max-w-3xl px-6 py-16">
-
-        {/* Breadcrumb */}
-        <div className="mb-8 text-sm text-gray-500">
-
-          <Link
-            href="/"
-            className="transition hover:text-gray-900"
-          >
-            Início
-          </Link>
-
-          <span className="mx-2">
-            /
-          </span>
-
-          <Link
-            href="/ferramentas"
-            className="transition hover:text-gray-900"
-          >
-            Ferramentas
-          </Link>
-
-          <span className="mx-2">
-            /
-          </span>
-
-          <span className="text-gray-900">
-            Separar PDF
-          </span>
-
-        </div>
-
-        {/* Título */}
-        <div className="mb-10 text-center">
-
-          <div className="mb-4 text-5xl">
-            ✂️
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-            Separar PDF
-          </h1>
+          <h2 className="mt-12 text-3xl font-bold tracking-tight text-slate-900">
+            Como separar um PDF?
+          </h2>
 
-          <p className="mx-auto mt-4 max-w-xl text-lg text-gray-600">
-            Extraia páginas específicas de um arquivo PDF de forma rápida e simples.
-          </p>
+          <div className="mt-6 space-y-5">
 
-        </div>
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                1. Selecione seu arquivo PDF
+              </h3>
 
-        {/* Card */}
-        <div className="rounded-2xl border bg-white p-8 shadow-sm">
-
-          {/* Upload */}
-          <label
-            htmlFor="pdf-upload"
-            className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center transition hover:border-gray-900 hover:bg-gray-50"
-          >
-
-            <div className="mb-4 text-4xl">
-              📁
+              <p className="mt-2 text-slate-600">
+                Escolha o arquivo PDF que deseja separar usando o botão de
+                seleção de arquivos.
+              </p>
             </div>
 
-            <p className="text-lg font-semibold text-gray-900">
-              Clique para selecionar seu PDF
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                2. Informe as páginas
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Digite os números das páginas que deseja extrair. Você pode
+                selecionar páginas individuais, como 1,3,5, ou intervalos,
+                como 1-5.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                3. Separe o PDF
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Clique no botão "Separar PDF" para criar um novo documento
+                contendo somente as páginas selecionadas.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                4. Baixe o novo PDF
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Após o processamento, clique no botão de download para salvar
+                o arquivo PDF separado.
+              </p>
+            </div>
+
+          </div>
+
+          <h2 className="mt-12 text-3xl font-bold tracking-tight text-slate-900">
+            Por que usar o Separador de PDF Oclix?
+          </h2>
+
+          <ul className="mt-6 list-disc space-y-3 pl-6 text-slate-600">
+
+            <li>
+              Separe arquivos PDF de forma rápida e simples.
+            </li>
+
+            <li>
+              Extraia páginas específicas de documentos PDF.
+            </li>
+
+            <li>
+              Selecione páginas individuais ou intervalos de páginas.
+            </li>
+
+            <li>
+              Não é necessário instalar programas.
+            </li>
+
+            <li>
+              O processamento acontece diretamente no navegador.
+            </li>
+
+            <li>
+              Ferramenta gratuita para separar PDF online.
+            </li>
+
+          </ul>
+
+          <h2 className="mt-12 text-3xl font-bold tracking-tight text-slate-900">
+            Perguntas frequentes sobre separar PDF
+          </h2>
+
+          <div className="mt-6 space-y-6">
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                Como separar um PDF?
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Selecione um arquivo PDF, informe as páginas que deseja
+                extrair e clique em "Separar PDF". Depois, basta baixar o
+                novo arquivo.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                Posso extrair páginas específicas de um PDF?
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Sim. Você pode informar páginas individuais ou intervalos de
+                páginas, como 1,3,5 ou 1-5.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                Posso separar várias páginas de uma vez?
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Sim. É possível selecionar várias páginas individuais ou
+                combinar páginas e intervalos no mesmo processo.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                Preciso instalar algum programa?
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Não. A ferramenta funciona diretamente no navegador e não
+                exige a instalação de um programa adicional.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-slate-900">
+                O Separador de PDF é gratuito?
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Sim. Você pode usar a ferramenta do Oclix para separar seus
+                arquivos PDF gratuitamente.
+              </p>
+            </div>
+
+          </div>
+
+          <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+
+            <h2 className="text-xl font-bold text-slate-900">
+              Mais ferramentas gratuitas
+            </h2>
+
+            <p className="mt-2 text-slate-600">
+              Continue usando outras ferramentas online do Oclix.
             </p>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Selecione um arquivo PDF
-            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
 
-            <input
-              id="pdf-upload"
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-          </label>
-
-          {/* Arquivo selecionado */}
-          {file &&
-            pageCount !== null && (
-              <div className="mt-6 rounded-xl bg-gray-50 p-5">
-
-                <div className="flex items-center justify-between gap-4">
-
-                  <div className="flex min-w-0 items-center gap-4">
-
-                    <div className="text-3xl">
-                      📄
-                    </div>
-
-                    <div className="min-w-0">
-
-                      <p className="truncate font-semibold text-gray-900">
-                        {file.name}
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-500">
-                        {pageCount} página(s) •{" "}
-                        {formatFileSize(
-                          file.size
-                        )}
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {/* Limpar */}
-                  <button
-                    type="button"
-                    onClick={
-                      clearFile
-                    }
-                    disabled={loading}
-                    className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    🗑️ Limpar
-                  </button>
-
-                </div>
-
-              </div>
-            )}
-
-          {/* Seleção de páginas */}
-          {pageCount !== null && (
-            <div className="mt-6">
-
-              <label
-                htmlFor="pages"
-                className="mb-2 block text-sm font-semibold text-gray-900"
+              <a
+                href="/ferramentas/comprimir-pdf"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
               >
-                Quais páginas deseja separar?
-              </label>
+                Comprimir PDF
+              </a>
 
-              <input
-                id="pages"
-                type="text"
-                value={
-                  selectedPages
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSelectedPages(
-                    event.target.value
-                  )
-                }
-                placeholder="Exemplo: 1,3,5 ou 1-5"
-                disabled={loading}
-                className="w-full rounded-xl border bg-white p-4 text-gray-900 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100"
-              />
+              <a
+                href="/ferramentas/juntar-pdf"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+              >
+                Juntar PDF
+              </a>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Você pode informar páginas individuais ou intervalos.
-              </p>
+              <a
+                href="/ferramentas/converter-imagens"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+              >
+                Converter Imagens
+              </a>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Exemplo: 1,3,5 ou 1-5 ou 1,3-6,10
-              </p>
+              <a
+                href="/ferramentas/remover-fundo"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+              >
+                Remover Fundo
+              </a>
 
             </div>
-          )}
 
-          {/* Barra de progresso */}
-          {loading && (
-            <div className="mt-6">
-
-              <div className="mb-2 flex items-center justify-between text-sm">
-
-                <span className="font-medium text-gray-700">
-                  Processando PDF...
-                </span>
-
-                <span className="font-semibold text-gray-900">
-                  {progress}%
-                </span>
-
-              </div>
-
-              <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
-
-                <div
-                  className="h-full rounded-full bg-gray-900 transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                  }}
-                />
-
-              </div>
-
-            </div>
-          )}
-
-          {/* Botão */}
-          <button
-            onClick={
-              separatePdf
-            }
-            disabled={
-              !file ||
-              pageCount === null ||
-              loading
-            }
-            className="mt-6 w-full rounded-xl bg-gray-900 px-6 py-4 font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
-          >
-            {loading
-              ? "Separando PDF..."
-              : "Separar PDF"}
-          </button>
-
-          {/* Mensagem */}
-          {message && (
-            <div className="mt-6 rounded-xl bg-gray-100 p-4 text-center text-sm text-gray-700">
-              {message}
-            </div>
-          )}
-
-          {/* Download */}
-          {downloadUrl && (
-            <a
-              href={
-                downloadUrl
-              }
-              download="pdf-separado.pdf"
-              className="mt-4 block w-full rounded-xl bg-green-600 px-6 py-4 text-center font-semibold text-white transition hover:bg-green-700"
-            >
-              Baixar PDF separado
-            </a>
-          )}
+          </div>
 
         </div>
-
-        {/* Informação */}
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Seu arquivo é processado diretamente no navegador.
-        </p>
-
       </section>
-
-      {/* Footer */}
-      <footer className="border-t bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
-
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Oclix. Todos os direitos reservados.
-          </p>
-
-          <nav className="flex items-center gap-6">
-
-            <Link
-              href="/"
-              className="text-sm text-gray-500 transition hover:text-gray-900"
-            >
-              Início
-            </Link>
-
-            <Link
-              href="/ferramentas"
-              className="text-sm text-gray-500 transition hover:text-gray-900"
-            >
-              Ferramentas
-            </Link>
-
-          </nav>
-
-        </div>
-      </footer>
-
-    </main>
+    </>
   );
 }

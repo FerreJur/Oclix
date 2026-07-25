@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ConverterImagens from "./ConverterImagens";
 
 type ImageFormat = "image/jpeg" | "image/png" | "image/webp";
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PDFDocument } from "pdf-lib";
+import ComprimirPdf from "./ComprimirPdf";
 
 export default function ComprimirPdfPage() {
   const [file, setFile] = useState<File | null>(null);

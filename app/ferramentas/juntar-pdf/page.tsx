@@ -1,543 +1,651 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { PDFDocument } from "pdf-lib";
+import JuntarPdf from "./JuntarPdf";
+
+export const metadata: Metadata = {
+  title:
+    "Juntar PDF Online Grátis | Unir e Mesclar PDFs | Oclix",
+
+  description:
+    "Junte, una e mescle vários arquivos PDF em um único documento online e grátis. Organize a ordem dos arquivos e baixe seu PDF combinado diretamente pelo navegador.",
+
+  keywords: [
+    "juntar pdf",
+    "juntar pdf online",
+    "juntar pdf grátis",
+    "unir pdf",
+    "unir pdf online",
+    "unir pdf grátis",
+    "mesclar pdf",
+    "mesclar pdf online",
+    "combinar pdf",
+    "combinar pdf online",
+    "juntar vários pdf",
+    "juntar arquivos pdf",
+    "unir vários arquivos pdf",
+    "juntar documentos pdf",
+    "como juntar pdf",
+    "como unir pdf",
+  ],
+
+  alternates: {
+    canonical:
+      "https://oclix.vercel.app/ferramentas/juntar-pdf",
+  },
+
+  openGraph: {
+    title:
+      "Juntar PDF Online Grátis | Unir e Mesclar PDFs | Oclix",
+
+    description:
+      "Una vários arquivos PDF em um único documento gratuitamente. Organize os arquivos e baixe seu PDF combinado.",
+
+    url:
+      "https://oclix.vercel.app/ferramentas/juntar-pdf",
+
+    siteName: "Oclix",
+
+    locale: "pt_BR",
+
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary",
+
+    title:
+      "Juntar PDF Online Grátis | Oclix",
+
+    description:
+      "Junte vários arquivos PDF em um único documento online e gratuitamente.",
+  },
+};
+
+const faqItems = [
+  {
+    question:
+      "Como juntar vários arquivos PDF em um só?",
+    answer:
+      "Selecione os arquivos PDF que deseja unir, organize a ordem dos documentos arrastando os arquivos na lista e clique em Juntar PDFs. Depois do processamento, você poderá baixar o novo documento PDF.",
+  },
+
+  {
+    question:
+      "Como unir dois PDFs?",
+    answer:
+      "Selecione os dois arquivos PDF na ferramenta Juntar PDF, confirme a ordem dos documentos e clique em Juntar PDFs. O resultado será um único arquivo PDF contendo as páginas dos dois documentos.",
+  },
+
+  {
+    question:
+      "Posso juntar mais de dois arquivos PDF?",
+    answer:
+      "Sim. Você pode selecionar vários arquivos PDF e combiná-los em um único documento.",
+  },
+
+  {
+    question:
+      "Posso alterar a ordem dos PDFs antes de juntar?",
+    answer:
+      "Sim. Depois de selecionar os arquivos, você pode arrastar os documentos para alterar a ordem em que eles aparecerão no PDF final.",
+  },
+
+  {
+    question:
+      "A ferramenta para juntar PDF é gratuita?",
+    answer:
+      "Sim. O Oclix oferece a ferramenta para juntar e unir arquivos PDF gratuitamente.",
+  },
+
+  {
+    question:
+      "Preciso instalar algum programa para juntar PDFs?",
+    answer:
+      "Não. A ferramenta funciona diretamente no navegador. Basta selecionar seus arquivos PDF, organizar a ordem e iniciar a combinação.",
+  },
+
+  {
+    question:
+      "Meus arquivos PDF são enviados para um servidor?",
+    answer:
+      "O processamento dos arquivos é realizado diretamente no navegador durante o uso da ferramenta, sem a necessidade de enviar os documentos para um serviço externo.",
+  },
+
+  {
+    question:
+      "Posso juntar PDFs pelo celular?",
+    answer:
+      "Sim. Você pode acessar a ferramenta pelo navegador do celular ou tablet e selecionar os arquivos PDF disponíveis no dispositivo.",
+  },
+
+  {
+    question:
+      "Posso juntar PDFs sem perder a ordem das páginas?",
+    answer:
+      "Sim. A ferramenta permite organizar a ordem dos arquivos antes da combinação. O PDF final seguirá a sequência escolhida.",
+  },
+
+  {
+    question:
+      "O que significa mesclar PDF?",
+    answer:
+      "Mesclar PDF significa combinar dois ou mais documentos PDF em um único arquivo. Também é conhecido como juntar, unir ou combinar PDFs.",
+  },
+];
 
 export default function JuntarPdfPage() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const jsonLd = {
+    "@context": "https://schema.org",
 
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    "@graph": [
+      {
+        "@type": "WebApplication",
 
-  useEffect(() => {
-    return () => {
-      if (downloadUrl) {
-        URL.revokeObjectURL(downloadUrl);
-      }
-    };
-  }, [downloadUrl]);
+        name: "Juntar PDF Online Oclix",
 
-  function handleFilesChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const selectedFiles = Array.from(
-      event.target.files || []
-    );
+        url:
+          "https://oclix.vercel.app/ferramentas/juntar-pdf",
 
-    if (selectedFiles.length === 0) {
-      return;
-    }
+        applicationCategory:
+          "UtilitiesApplication",
 
-    const invalidFile = selectedFiles.find(
-      (file) => file.type !== "application/pdf"
-    );
+        operatingSystem: "Any",
 
-    if (invalidFile) {
-      setMessage(
-        "Todos os arquivos selecionados devem ser PDFs válidos."
-      );
+        description:
+          "Ferramenta online gratuita para juntar, unir e combinar vários arquivos PDF em um único documento.",
 
-      return;
-    }
+        offers: {
+          "@type": "Offer",
 
-    if (downloadUrl) {
-      URL.revokeObjectURL(downloadUrl);
-    }
+          price: "0",
 
-    setFiles((currentFiles) => [
-      ...currentFiles,
-      ...selectedFiles,
-    ]);
+          priceCurrency: "BRL",
+        },
+      },
 
-    setDownloadUrl(null);
-    setMessage("");
-    setProgress(0);
+      {
+        "@type": "BreadcrumbList",
 
-    event.target.value = "";
-  }
+        itemListElement: [
+          {
+            "@type": "ListItem",
 
-  function removeFile(index: number) {
-    setFiles((currentFiles) =>
-      currentFiles.filter(
-        (_, fileIndex) => fileIndex !== index
-      )
-    );
+            position: 1,
 
-    setDownloadUrl(null);
-    setMessage("");
-    setProgress(0);
-  }
+            name: "Início",
 
-  function clearFiles() {
-    if (downloadUrl) {
-      URL.revokeObjectURL(downloadUrl);
-    }
+            item:
+              "https://oclix.vercel.app/",
+          },
 
-    setFiles([]);
-    setDownloadUrl(null);
-    setMessage("");
-    setProgress(0);
-  }
+          {
+            "@type": "ListItem",
 
-  function handleDragStart(index: number) {
-    setDraggedIndex(index);
-  }
+            position: 2,
 
-  function handleDragOver(
-    event: React.DragEvent<HTMLDivElement>
-  ) {
-    event.preventDefault();
-  }
+            name: "Ferramentas",
 
-  function handleDrop(
-    event: React.DragEvent<HTMLDivElement>,
-    targetIndex: number
-  ) {
-    event.preventDefault();
+            item:
+              "https://oclix.vercel.app/ferramentas",
+          },
 
-    if (
-      draggedIndex === null ||
-      draggedIndex === targetIndex
-    ) {
-      setDraggedIndex(null);
-      return;
-    }
+          {
+            "@type": "ListItem",
 
-    const newFiles = [...files];
+            position: 3,
 
-    const draggedFile = newFiles[draggedIndex];
+            name: "Juntar PDF",
 
-    newFiles.splice(draggedIndex, 1);
+            item:
+              "https://oclix.vercel.app/ferramentas/juntar-pdf",
+          },
+        ],
+      },
 
-    newFiles.splice(
-      targetIndex,
-      0,
-      draggedFile
-    );
+      {
+        "@type": "FAQPage",
 
-    setFiles(newFiles);
-    setDraggedIndex(null);
+        mainEntity: faqItems.map(
+          (item) => ({
+            "@type": "Question",
 
-    setDownloadUrl(null);
-    setMessage("");
-    setProgress(0);
-  }
+            name: item.question,
 
-  function handleDragEnd() {
-    setDraggedIndex(null);
-  }
+            acceptedAnswer: {
+              "@type": "Answer",
 
-  function formatFileSize(size: number) {
-    if (size < 1024) {
-      return `${size} Bytes`;
-    }
-
-    if (size < 1024 * 1024) {
-      return `${(size / 1024).toFixed(2)} KB`;
-    }
-
-    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-  }
-
-  async function mergePdfs() {
-    if (files.length < 2) {
-      setMessage(
-        "Selecione pelo menos 2 arquivos PDF para juntar."
-      );
-
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setMessage("");
-      setDownloadUrl(null);
-      setProgress(0);
-
-      const mergedPdf =
-        await PDFDocument.create();
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        const progressValue = Math.round(
-          (i / files.length) * 80
-        );
-
-        setProgress(progressValue);
-
-        const arrayBuffer =
-          await file.arrayBuffer();
-
-        const pdf =
-          await PDFDocument.load(arrayBuffer);
-
-        const pages =
-          await mergedPdf.copyPages(
-            pdf,
-            pdf.getPageIndices()
-          );
-
-        pages.forEach((page) => {
-          mergedPdf.addPage(page);
-        });
-
-        await new Promise((resolve) =>
-          setTimeout(resolve, 50)
-        );
-      }
-
-      setProgress(90);
-
-      const mergedPdfBytes =
-        await mergedPdf.save();
-
-      const blob = new Blob(
-        [new Uint8Array(mergedPdfBytes)],
-        {
-          type: "application/pdf",
-        }
-      );
-
-      const url =
-        URL.createObjectURL(blob);
-
-      setDownloadUrl(url);
-      setProgress(100);
-
-      setMessage(
-        "PDFs juntados com sucesso!"
-      );
-
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        "Não foi possível juntar os PDFs. Verifique se os arquivos são válidos."
-      );
-
-      setProgress(0);
-
-    } finally {
-      setLoading(false);
-    }
-  }
+              text: item.answer,
+            },
+          })
+        ),
+      },
+    ],
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html:
+            JSON.stringify(jsonLd),
+        }}
+      />
 
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <main className="min-h-screen bg-gray-50">
 
-          {/* Logo */}
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight text-gray-900"
+        <section className="mx-auto max-w-5xl px-6 py-10 sm:py-16">
+
+          {/* Breadcrumb */}
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-8 text-sm text-gray-500"
           >
-            Oclix
-          </Link>
-
-          {/* Navegação */}
-          <nav className="flex items-center gap-6">
-
             <Link
               href="/"
-              className="text-sm font-medium text-gray-600 transition hover:text-gray-900"
+              className="transition hover:text-gray-900"
             >
               Início
             </Link>
 
+            <span className="mx-2">
+              /
+            </span>
+
             <Link
               href="/ferramentas"
-              className="text-sm font-medium text-gray-600 transition hover:text-gray-900"
+              className="transition hover:text-gray-900"
             >
               Ferramentas
             </Link>
 
+            <span className="mx-2">
+              /
+            </span>
+
+            <span className="text-gray-900">
+              Juntar PDF
+            </span>
           </nav>
 
-        </div>
-      </header>
+          {/* Cabeçalho */}
+          <header className="mx-auto mb-10 max-w-3xl text-center">
 
-      {/* Conteúdo */}
-      <section className="mx-auto max-w-3xl px-6 py-16">
+            <div
+              className="mb-4 text-5xl"
+              aria-hidden="true"
+            >
+              📚
+            </div>
 
-        {/* Breadcrumb */}
-        <div className="mb-8 text-sm text-gray-500">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+              Juntar PDF Online Grátis
+            </h1>
 
-          <Link
-            href="/"
-            className="transition hover:text-gray-900"
-          >
-            Início
-          </Link>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">
+              Una vários arquivos PDF em um único documento de forma rápida e gratuita. Organize a ordem dos arquivos e baixe o PDF combinado diretamente pelo navegador.
+            </p>
 
-          <span className="mx-2">
-            /
-          </span>
+          </header>
 
-          <Link
-            href="/ferramentas"
-            className="transition hover:text-gray-900"
-          >
-            Ferramentas
-          </Link>
+          {/* Ferramenta */}
+          <JuntarPdf />
 
-          <span className="mx-2">
-            /
-          </span>
+          {/* Privacidade */}
+          <div className="mx-auto mt-6 max-w-3xl rounded-xl border border-gray-200 bg-white p-5 text-center">
 
-          <span className="text-gray-900">
-            Juntar PDF
-          </span>
+            <p className="text-sm leading-6 text-gray-600">
+              🔒{" "}
+              <strong className="text-gray-900">
+                Processamento direto no navegador.
+              </strong>{" "}
+              Seus arquivos são processados localmente durante o uso da ferramenta.
+            </p>
 
-        </div>
-
-        {/* Título */}
-        <div className="mb-10 text-center">
-
-          <div className="mb-4 text-5xl">
-            📚
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-            Juntar PDF
-          </h1>
+          {/* Conteúdo SEO */}
+          <article className="mx-auto mt-16 max-w-3xl space-y-12">
 
-          <p className="mx-auto mt-4 max-w-xl text-lg text-gray-600">
-            Una vários arquivos PDF em um único documento de forma rápida e simples.
-          </p>
+            {/* Como juntar */}
+            <section>
 
-        </div>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Como juntar arquivos PDF online?
+              </h2>
 
-        {/* Card */}
-        <div className="rounded-2xl border bg-white p-8 shadow-sm">
-
-          {/* Upload */}
-          <label
-            htmlFor="pdf-upload"
-            className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center transition hover:border-gray-900 hover:bg-gray-50"
-          >
-
-            <div className="mb-4 text-4xl">
-              📁
-            </div>
-
-            <p className="text-lg font-semibold text-gray-900">
-              Clique para selecionar os PDFs
-            </p>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Você pode selecionar vários arquivos PDF
-            </p>
-
-            <input
-              id="pdf-upload"
-              type="file"
-              accept="application/pdf"
-              multiple
-              onChange={handleFilesChange}
-              className="hidden"
-            />
-
-          </label>
-
-          {/* Lista */}
-          {files.length > 0 && (
-            <div className="mt-6">
-
-              <div className="mb-4 flex items-center justify-between">
-
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Arquivos selecionados
-                </h2>
-
-                <button
-                  type="button"
-                  onClick={clearFiles}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  🗑️ Limpar tudo
-                </button>
-
-              </div>
-
-              <p className="mb-4 text-sm text-gray-500">
-                Arraste os arquivos para alterar a ordem.
+              <p className="mt-4 leading-7 text-gray-600">
+                Juntar arquivos PDF é útil quando você precisa transformar vários documentos separados em um único arquivo. Isso pode facilitar o envio, armazenamento e organização de documentos.
               </p>
 
-              <div className="space-y-3">
+              <p className="mt-4 leading-7 text-gray-600">
+                Com o Juntar PDF do Oclix, você pode selecionar vários arquivos, organizar a sequência desejada e combinar os documentos em um único PDF.
+              </p>
 
-                {files.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    draggable
-                    onDragStart={() =>
-                      handleDragStart(index)
-                    }
-                    onDragOver={handleDragOver}
-                    onDrop={(event) =>
-                      handleDrop(
-                        event,
-                        index
-                      )
-                    }
-                    onDragEnd={handleDragEnd}
-                    className={`flex cursor-grab items-center justify-between gap-4 rounded-xl border p-4 transition active:cursor-grabbing ${
-                      draggedIndex === index
-                        ? "border-gray-900 bg-gray-100 opacity-50"
-                        : "border-gray-200 bg-gray-50"
-                    }`}
-                  >
+              <div className="mt-6 space-y-4">
 
-                    <div className="flex min-w-0 items-center gap-3">
+                <div className="rounded-xl border bg-white p-5">
 
-                      {/* Drag handle */}
-                      <div className="cursor-grab text-xl text-gray-400">
-                        ☰
-                      </div>
+                  <h3 className="font-semibold text-gray-900">
+                    1. Selecione seus arquivos PDF
+                  </h3>
 
-                      <div className="text-2xl">
-                        📄
-                      </div>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Escolha dois ou mais documentos PDF que deseja combinar.
+                  </p>
 
-                      <div className="min-w-0">
+                </div>
 
-                        <p className="truncate font-semibold text-gray-900">
-                          {index + 1}. {file.name}
-                        </p>
+                <div className="rounded-xl border bg-white p-5">
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          {formatFileSize(file.size)}
-                        </p>
+                  <h3 className="font-semibold text-gray-900">
+                    2. Organize a ordem dos arquivos
+                  </h3>
 
-                      </div>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Arraste os documentos para definir a ordem em que eles aparecerão no arquivo final.
+                  </p>
 
-                    </div>
+                </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeFile(index)
-                      }
-                      className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    3. Junte os PDFs
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Clique em Juntar PDFs para combinar os documentos em um único arquivo.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    4. Baixe o PDF final
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Após o processamento, clique no botão de download para salvar o documento combinado.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* Sinônimos */}
+            <section>
+
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Juntar, unir ou mesclar PDF
+              </h2>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                Você pode encontrar diferentes termos para a mesma tarefa. Juntar PDF, unir PDF, mesclar PDF e combinar PDF são expressões utilizadas para descrever o processo de transformar vários documentos PDF em um único arquivo.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    Juntar PDF
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Combine vários arquivos em um único documento.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    Unir PDF
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Una documentos PDF em uma sequência organizada.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    Mesclar PDF
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Mescle vários documentos para criar um único arquivo.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    Combinar PDF
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Combine arquivos PDF de maneira simples e rápida.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* Casos de uso */}
+            <section>
+
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Quando juntar arquivos PDF pode ser útil?
+              </h2>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                Combinar documentos pode facilitar diversas tarefas do dia a dia, tanto para uso pessoal quanto profissional.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    📄 Documentos
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Reúna documentos relacionados em um único arquivo PDF.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    📚 Trabalhos
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Combine diferentes partes de um trabalho ou projeto em um documento.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    💼 Trabalho
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Organize relatórios, documentos e arquivos relacionados em um único PDF.
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border bg-white p-5">
+
+                  <h3 className="font-semibold text-gray-900">
+                    📤 Envio de arquivos
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Reduza a quantidade de arquivos separados ao enviar documentos para outras pessoas.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            {/* Organização */}
+            <section>
+
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Organize a ordem dos seus PDFs
+              </h2>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                A ordem dos documentos pode ser importante para manter a estrutura correta do arquivo final. Por isso, antes de juntar os PDFs, organize os arquivos na sequência desejada.
+              </p>
+
+              <p className="mt-4 leading-7 text-gray-600">
+                Na ferramenta do Oclix, você pode arrastar os arquivos selecionados e reorganizar a sequência antes de iniciar a combinação.
+              </p>
+
+            </section>
+
+            {/* FAQ */}
+            <section>
+
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Perguntas frequentes sobre juntar PDF
+              </h2>
+
+              <div className="mt-6 space-y-4">
+
+                {faqItems.map(
+                  (item) => (
+                    <details
+                      key={item.question}
+                      className="group rounded-xl border bg-white p-5"
                     >
-                      Remover
-                    </button>
 
-                  </div>
-                ))}
+                      <summary className="cursor-pointer list-none font-semibold text-gray-900">
 
-              </div>
+                        <span className="flex items-center justify-between gap-4">
 
-            </div>
-          )}
+                          {item.question}
 
-          {/* Barra de progresso */}
-          {loading && (
-            <div className="mt-6">
+                          <span
+                            className="text-gray-400 transition group-open:rotate-45"
+                            aria-hidden="true"
+                          >
+                            +
+                          </span>
 
-              <div className="mb-2 flex items-center justify-between text-sm">
+                        </span>
 
-                <span className="font-medium text-gray-700">
-                  Processando PDFs...
-                </span>
+                      </summary>
 
-                <span className="font-semibold text-gray-900">
-                  {progress}%
-                </span>
+                      <p className="mt-4 leading-7 text-gray-600">
+                        {item.answer}
+                      </p>
 
-              </div>
-
-              <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
-
-                <div
-                  className="h-full rounded-full bg-gray-900 transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                  }}
-                />
+                    </details>
+                  )
+                )}
 
               </div>
 
-            </div>
-          )}
+            </section>
 
-          {/* Botão */}
-          <button
-            onClick={mergePdfs}
-            disabled={
-              files.length < 2 ||
-              loading
-            }
-            className="mt-6 w-full rounded-xl bg-gray-900 px-6 py-4 font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
-          >
-            {loading
-              ? "Juntando PDFs..."
-              : "Juntar PDFs"}
-          </button>
+            {/* Outras ferramentas */}
+            <section>
 
-          {/* Mensagem */}
-          {message && (
-            <div className="mt-6 rounded-xl bg-gray-100 p-4 text-center text-sm text-gray-700">
-              {message}
-            </div>
-          )}
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Outras ferramentas online do Oclix
+              </h2>
 
-          {/* Download */}
-          {downloadUrl && (
-            <a
-              href={downloadUrl}
-              download="pdf-juntado.pdf"
-              className="mt-4 block w-full rounded-xl bg-green-600 px-6 py-4 text-center font-semibold text-white transition hover:bg-green-700"
-            >
-              Baixar PDF juntado
-            </a>
-          )}
+              <p className="mt-4 leading-7 text-gray-600">
+                Continue explorando as ferramentas gratuitas do Oclix para trabalhar com documentos e arquivos diretamente pelo navegador.
+              </p>
 
-        </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
 
-        {/* Informação */}
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Seus arquivos são processados diretamente no navegador.
-        </p>
+                <Link
+                  href="/ferramentas/comprimir-pdf"
+                  className="rounded-xl border bg-white p-5 transition hover:border-gray-900 hover:shadow-sm"
+                >
+                  <h3 className="font-semibold text-gray-900">
+                    Comprimir PDF
+                  </h3>
 
-      </section>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Reduza o tamanho dos seus arquivos PDF.
+                  </p>
 
-      {/* Footer */}
-      <footer className="border-t bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
+                </Link>
 
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Oclix. Todos os direitos reservados.
-          </p>
+                <Link
+                  href="/ferramentas/separar-pdf"
+                  className="rounded-xl border bg-white p-5 transition hover:border-gray-900 hover:shadow-sm"
+                >
+                  <h3 className="font-semibold text-gray-900">
+                    Separar PDF
+                  </h3>
 
-          <nav className="flex items-center gap-6">
+                  <p className="mt-2 text-sm text-gray-600">
+                    Separe páginas e divida documentos PDF.
+                  </p>
 
-            <Link
-              href="/"
-              className="text-sm text-gray-500 transition hover:text-gray-900"
-            >
-              Início
-            </Link>
+                </Link>
 
-            <Link
-              href="/ferramentas"
-              className="text-sm text-gray-500 transition hover:text-gray-900"
-            >
-              Ferramentas
-            </Link>
+                <Link
+                  href="/ferramentas/converter-imagens"
+                  className="rounded-xl border bg-white p-5 transition hover:border-gray-900 hover:shadow-sm"
+                >
+                  <h3 className="font-semibold text-gray-900">
+                    Converter Imagens
+                  </h3>
 
-          </nav>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Converta imagens entre JPG, PNG e WebP.
+                  </p>
 
-        </div>
-      </footer>
+                </Link>
 
-    </main>
+                <Link
+                  href="/ferramentas"
+                  className="rounded-xl border bg-white p-5 transition hover:border-gray-900 hover:shadow-sm"
+                >
+                  <h3 className="font-semibold text-gray-900">
+                    Ver todas as ferramentas
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Explore todas as ferramentas disponíveis no Oclix.
+                  </p>
+
+                </Link>
+
+              </div>
+
+            </section>
+
+          </article>
+
+        </section>
+
+      </main>
+    </>
   );
 }
